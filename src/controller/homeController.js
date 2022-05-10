@@ -1,36 +1,48 @@
-import mysql from 'mysql2';
-
-// create the connection to database
-const connection = mysql.createConnection({
-    host: 'localhost',
-    user: 'root',
-    database: 'jwt'
-});
-
+import userSevice from '../service/userService';
 const res = require("express/lib/response");
 
 const handleHelloWorld = (req, res) => {
     return res.render("home.ejs");
 }
-const handleUser = (req, res) => {
-    return res.render("user.ejs");
+const handleUser = async(req, res) => {
+    let listUser = await userSevice.GetUserList();
+    return res.render("user.ejs", { listUser });
+
 }
 const handleCreateNewUser = (req, res) => {
     let email = req.body.email;
     let username = req.body.username;
     let password = req.body.password;
-    connection.query(
-        'insert into users (email,password,username) value (?,?,?)', [email, password, username],
-        function(err, results, fields) {
-            if (err) {
-                console.log(err);
-            }
-        }
-    );
-    return res.send("handleCreateNewUser");
+    userSevice.CreateNewUser(email, password, username);
+    return res.redirect("/user");
+}
+const handleDeleteUser = async(req, res) => {
+    await userSevice.deleteUser(req.params.id);
+    return res.redirect("/user");
+}
+const getUpdateUserPage = async(req, res) => {
+    let id = req.params.id;
+    let user = await userSevice.getUserById(id);
+    let userData = {};
+    if (user && user.length > 0) {
+        userData = user[0];
+    }
+    // console.log("check user:", user);
+    return res.render("user-update.ejs", { userData });
+}
+const handleUpdateUser = async(req, res) => {
+    let email = req.body.email;
+    let username = req.body.username;
+    let id = req.body.id;
+    await userSevice.updateUser(email, username, id);
+    console.log(req.body);
+    return res.redirect("/user");
 }
 module.exports = {
     handleHelloWorld,
     handleUser,
-    handleCreateNewUser
+    handleCreateNewUser,
+    handleDeleteUser,
+    getUpdateUserPage,
+    handleUpdateUser
 }
