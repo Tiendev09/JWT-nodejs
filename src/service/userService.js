@@ -1,18 +1,7 @@
 import bcrypt from 'bcryptjs';
 import mysql from 'mysql2/promise';
 import bluebird from 'bluebird';
-
-// create the connection, specify bluebird as Promise
-// const connection = await mysql.createConnection({ host: 'localhost', user: 'root', database: 'test', Promise: bluebird });
-
-
-
-// create the connection to database
-// const connection = mysql.createConnection({
-//     host: 'localhost',
-//     user: 'root',
-//     database: 'jwt'
-// });
+import db from '../models/index';
 var salt = bcrypt.genSaltSync(10);
 const hashUserPassword = (userPassword) => {
     let hashPassword = bcrypt.hashSync(userPassword, salt);
@@ -20,53 +9,77 @@ const hashUserPassword = (userPassword) => {
 }
 const CreateNewUser = async(email, password, username) => {
     let hashPass = hashUserPassword(password);
-    const connection = await mysql.createConnection({ host: 'localhost', user: 'root', database: 'jwt', Promise: bluebird });
     try {
-        const [rows, fields] = await connection.execute('insert into users (email,password,username) value (?,?,?)', [email, hashPass, username]);
+        await db.User.create({
+            email: email,
+            password: hashPass,
+            username: username
+        })
     } catch (e) {
         console.log(e);
     }
 
 }
 const GetUserList = async() => {
-    // create the connection, specify bluebird as Promise
-    const connection = await mysql.createConnection({ host: 'localhost', user: 'root', database: 'jwt', Promise: bluebird });
+
+    //test relationship
+    let newUser = await db.User.findOne({
+            where: {
+                id: 1,
+            },
+            //lay cac truong du lieu mong muon
+            attributes: ["id", "email", "username"],
+            include: { model: db.Group, attributes: ["name", "description"] },
+            // include: { model: db.Group },cach 2
+            raw: true,
+            nest: true, //sd khi dung voi include
+        })
+        // let roles = await db.Group.findAll({
+        //         where: { id: 1 },
+        //         include: db.Role,
+        //         raw: true,
+        //         nest: true,
+        //     })
+    let roles = await db.Role.findAll({
+        include: { model: db.Group, where: { id: 1 } },
+        raw: true,
+        nest: true,
+    })
+
+    console.log("Check user", newUser);
+    console.log("Check roles", roles)
     let users = [];
-    try {
-        const [rows, fields] = await connection.execute('select * from users');
-        return rows;
-    } catch (e) {
-        console.log(e)
-    }
+    users = await db.User.findAll();
+    return users;
 
 
 }
 const deleteUser = async(id) => {
-    const connection = await mysql.createConnection({ host: 'localhost', user: 'root', database: 'jwt', Promise: bluebird });
-    try {
-        const [rows, fields] = await connection.execute('delete from users where id = ?', [id]);
-        return rows;
-    } catch (e) {
-        console.log(e)
-    }
+    await db.User.destroy({
+        where: {
+            id: id
+        }
+    });
 }
 const getUserById = async(id) => {
-    const connection = await mysql.createConnection({ host: 'localhost', user: 'root', database: 'jwt', Promise: bluebird });
-    try {
-        const [rows, fields] = await connection.execute('select * from users where id = ?', [id]);
-        return rows;
-    } catch (e) {
-        console.log(e)
-    }
+    let user = {};
+    user = await db.User.findOne({
+        where: {
+            id: id
+        }
+    });
+    return user;
+
 }
 const updateUser = async(email, username, id) => {
-    const connection = await mysql.createConnection({ host: 'localhost', user: 'root', database: 'jwt', Promise: bluebird });
-    try {
-        const [rows, fields] = await connection.execute('update users set email = ?,username = ? where id=?', [email, username, id]);
-        return rows;
-    } catch (e) {
-        console.log(e)
-    }
+    await db.User.update({
+        email: email,
+        username: username
+    }, {
+        where: {
+            id: id
+        }
+    })
 }
 module.exports = {
     CreateNewUser,
