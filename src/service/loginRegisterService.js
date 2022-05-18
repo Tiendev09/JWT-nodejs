@@ -1,6 +1,13 @@
 import db from "../models/index";
 import bcrypt from 'bcryptjs';
+import { Op } from "sequelize";
+import { getGroupWithRoles } from "../service/JWTService";
+import { createJWT } from "../middleware/JWTAction";
+require("dotenv").config();
 var salt = bcrypt.genSaltSync(10);
+const checkPassword = (inputPassword, hashPassword) => {
+    return bcrypt.compareSync(inputPassword, hashPassword);
+}
 const hashUserPassword = (userPassword) => {
     let hashPassword = bcrypt.hashSync(userPassword, salt);
     return hashPassword;
@@ -32,7 +39,6 @@ const registerNewUser = async(rawUserData) => {
     try {
         //b1 check email password phone xem co ton tai trong csdl chua
         let isEmailExists = await checkEmailExists(rawUserData.email);
-        // console.log("check email", isEmailExists)
         if (isEmailExists === true) {
             return {
                 EM: 'The email is already exists',
@@ -54,6 +60,7 @@ const registerNewUser = async(rawUserData) => {
             username: rawUserData.username,
             phone: rawUserData.phone,
             password: hashPassword,
+            groupId: 4
         })
         return {
             EM: "Success",
@@ -68,6 +75,56 @@ const registerNewUser = async(rawUserData) => {
     }
 
 }
+
+const handleUserLogin = async(rawData) => {
+    try {
+
+        let user = await db.User.findOne({
+            where: {
+                [Op.or]: [
+                    { email: rawData.valueLogin },
+                    { phone: rawData.valueLogin }
+                ]
+            }
+        })
+        if (user) {
+            let isCorrectPassword = checkPassword(rawData.password, user.password);
+            if (isCorrectPassword === true) {
+                let groupWithRoles = await getGroupWithRoles(user);
+                let payload = {
+                    email: user.email,
+                    groupWithRoles,
+                    expiresIn: process.env.JWT_EXPIRES_IN
+                }
+                let token = createJWT(payload);
+                return {
+                    EM: "OK",
+                    EC: 0,
+                    DT: {
+                        access_Token: token,
+                        groupWithRoles,
+
+                    }
+                }
+            }
+        }
+
+        // console.log("Not user with email/phone", rawData.valueLogin, "Password", rawData.password);
+        return {
+            EM: "Your email/phone number or password incorrect!",
+            EC: 1,
+            DT: ""
+        }
+
+    } catch (e) {
+        console.log("Check error", e);
+        return {
+            EM: "somthing wrong in service",
+            EC: -2
+        }
+    }
+}
 module.exports = {
-    registerNewUser
+    registerNewUser,
+    handleUserLogin
 }

@@ -24,22 +24,17 @@ const GetUserList = async() => {
 
     //test relationship
     let newUser = await db.User.findOne({
-            where: {
-                id: 1,
-            },
-            //lay cac truong du lieu mong muon
-            attributes: ["id", "email", "username"],
-            include: { model: db.Group, attributes: ["name", "description"] },
-            // include: { model: db.Group },cach 2
-            raw: true,
-            nest: true, //sd khi dung voi include
-        })
-        // let roles = await db.Group.findAll({
-        //         where: { id: 1 },
-        //         include: db.Role,
-        //         raw: true,
-        //         nest: true,
-        //     })
+        where: {
+            id: 1,
+        },
+        //lay cac truong du lieu mong muon
+        attributes: ["id", "email", "username"],
+        include: { model: db.Group, attributes: ["name", "description"] },
+        // include: { model: db.Group },cach 2
+        raw: true,
+        nest: true, //sd khi dung voi include
+    })
+
     let roles = await db.Role.findAll({
         include: { model: db.Group, where: { id: 1 } },
         raw: true,
@@ -68,7 +63,7 @@ const getUserById = async(id) => {
             id: id
         }
     });
-    return user;
+    return user.get({ plain: true });
 
 }
 const updateUser = async(email, username, id) => {
