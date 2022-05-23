@@ -38,9 +38,15 @@ const handleRegister = async(req, res) => {
         });
     }
 }
+
 const handleLogin = async(req, res) => {
     try {
+
         let data = await loginRegisterService.handleUserLogin(req.body);
+        if (data && data.DT && data.DT.access_Token) {
+            res.cookie("jwt", data.DT.access_Token, { httpOnly: true, maxAge: 60 * 60 * 1000 });
+        }
+        //set cookie
         return res.status(200).json({
             EM: data.EM,
             EC: data.EC,
@@ -56,8 +62,25 @@ const handleLogin = async(req, res) => {
 
 
 }
+const handleLogout = (req, res) => {
+    try {
+        res.clearCookie("jwt");
+        return res.status(200).json({
+            EM: "Clear cookies done!",
+            EC: 0,
+            DT: ''
+        });
+    } catch (error) {
+        return res.status(500).json({
+            EM: "error from server",
+            EC: "-1",
+            DT: ""
+        });
+    }
+}
 module.exports = {
     testApi,
     handleRegister,
-    handleLogin
+    handleLogin,
+    handleLogout
 }

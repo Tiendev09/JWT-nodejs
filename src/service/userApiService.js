@@ -61,7 +61,7 @@ const getUserWithPaginate = async(page, limit) => {
                 attributes: ["id", "email", "username", "phone", "gender", "adress"],
                 include: { model: db.Group, attributes: ["name", "description", "id"] },
                 order: [
-                    ["id", "desc"]
+                    ["id", "asc"]
                 ]
             })
             // console.log("count", count, "row", rows);
@@ -126,6 +126,11 @@ const createNewUser = async(data) => {
         }
     } catch (e) {
         console.log(e);
+        return {
+            EM: 'Something wrong with services...',
+            EC: 1,
+            DT: [],
+        }
     }
 }
 const updateUser = async(data) => {

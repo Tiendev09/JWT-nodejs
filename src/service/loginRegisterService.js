@@ -1,7 +1,7 @@
 import db from "../models/index";
 import bcrypt from 'bcryptjs';
 import { Op } from "sequelize";
-import { getGroupWithRoles } from "../service/JWTService";
+import { getGroupWithRoles } from "./JWTService";
 import { createJWT } from "../middleware/JWTAction";
 require("dotenv").config();
 var salt = bcrypt.genSaltSync(10);
@@ -93,8 +93,10 @@ const handleUserLogin = async(rawData) => {
                 let groupWithRoles = await getGroupWithRoles(user);
                 let payload = {
                     email: user.email,
+                    username: user.username,
                     groupWithRoles,
-                    expiresIn: process.env.JWT_EXPIRES_IN
+
+
                 }
                 let token = createJWT(payload);
                 return {
@@ -103,7 +105,8 @@ const handleUserLogin = async(rawData) => {
                     DT: {
                         access_Token: token,
                         groupWithRoles,
-
+                        email: user.email,
+                        username: user.username
                     }
                 }
             }

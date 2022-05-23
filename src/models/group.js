@@ -13,8 +13,8 @@ module.exports = (sequelize, DataTypes) => {
             // define association here
             //1 group => n user
             // 1 group => n role
-            Group.hasMany(models.User);
-            Group.belongsToMany(models.Role, { through: "Group_Role" });
+            Group.hasMany(models.User, { foreignKey: 'groupId' });
+            Group.belongsToMany(models.Role, { through: "Group_Role", foreignKey: "groupId" });
         }
     };
     Group.init({

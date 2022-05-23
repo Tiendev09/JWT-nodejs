@@ -13,7 +13,7 @@ module.exports = (sequelize, DataTypes) => {
             // define association here
             //1 user => 1 group
             //1 user => n project
-            User.belongsTo(models.Group);
+            User.belongsTo(models.Group, { foreignKey: "groupId" });
             User.belongsToMany(models.Project, { through: "Project_User" })
         }
     };
